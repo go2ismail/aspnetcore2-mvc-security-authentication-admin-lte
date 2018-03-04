@@ -26,6 +26,8 @@ namespace motekarteknologi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //DISCLAIMER: put your secret by using manage user secrets wheren development
+            //https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?tabs=visual-studio
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
@@ -59,6 +61,10 @@ namespace motekarteknologi
 
             app.UseMvc(routes =>
             {
+                routes.MapRoute(
+                    name: "api",
+                    template: "api/{controller=Home}/{action=Index}/{id?}");
+
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");

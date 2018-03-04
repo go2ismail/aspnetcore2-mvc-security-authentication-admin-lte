@@ -13,6 +13,8 @@ using Microsoft.Extensions.Options;
 using motekarteknologi.Models;
 using motekarteknologi.Models.ManageViewModels;
 using motekarteknologi.Services;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace motekarteknologi.Controllers
 {
@@ -489,6 +491,57 @@ namespace motekarteknologi.Controllers
             var model = new ShowRecoveryCodesViewModel { RecoveryCodes = recoveryCodes.ToArray() };
 
             return View(nameof(ShowRecoveryCodes), model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SendGrid()
+        {
+            SendGrid sendGrid = new SendGrid();
+            using (var client = new HttpClient())
+            {
+                var apiUrl = Url.RouteUrl(
+                                   "api",
+                                   new { controller = "SendGrids", action = "GetSendGrid", id = Statics.SendGridKey.Value },
+                                   "https"
+                               );
+
+                var result = await client
+                            .GetAsync(apiUrl)
+                            .Result
+                            .Content
+                            .ReadAsStringAsync();
+
+                sendGrid = JsonConvert.DeserializeObject<Models.SendGrid>(result);
+            }
+            return View(sendGrid);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendGrid(SendGrid model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            using (var client = new HttpClient())
+            {
+                var apiUrl = Url.RouteUrl(
+                                   "api",
+                                   new { controller = "SendGrids", action = "Update", id = Statics.SendGridKey.Value },
+                                   "https"
+                               );
+
+                var result = await client
+                            .PutAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json"))
+                            .Result
+                            .Content
+                            .ReadAsStringAsync();
+            }
+
+            StatusMessage = "Your SendGrid secrets has been updated";
+            return RedirectToAction(nameof(SendGrid));
         }
 
         #region Helpers
